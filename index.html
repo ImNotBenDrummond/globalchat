@@ -7,8 +7,6 @@
     <title>Global Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20n6cbbYvR76/dYf/L0qP2d6L45Lz4Ew2VjK1E2m4gI=" crossorigin=""></script>
     <style>
         @supports (backdrop-filter: blur(20px)) {
             .glass-effect {
@@ -39,28 +37,15 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
-
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        @media (min-width: 768px) {
-            .main-content {
-                flex-direction: row;
-            }
-        }
         
-        .chat-container, .map-container {
+        .chat-container {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -68,15 +53,6 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .chat-container {
-            flex-basis: 50%;
-        }
-
-        .map-container {
-            flex-basis: 50%;
-            min-height: 400px;
         }
 
         .chat-header {
@@ -182,19 +158,6 @@
             max-width: 500px;
             text-align: left;
         }
-
-        #map {
-            width: 100%;
-            flex-grow: 1;
-            border-radius: 2rem;
-        }
-
-        .map-header {
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
     </style>
 </head>
 
@@ -235,24 +198,13 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Map Container -->
-            <div class="map-container glass-effect p-4">
-                <header class="map-header">
-                    <h2 class="text-xl font-bold">Live Locations</h2>
-                    <div class="text-sm">
-                        Locations: <span id="locationCount" class="font-mono bg-slate-700 rounded-md p-1">0</span>
-                    </div>
-                </header>
-                <div id="map" class="rounded-lg mt-4 z-0"></div>
-            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set Firebase debug log level
@@ -277,15 +229,11 @@
         const messagesContainer = document.getElementById('messages');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const setupModal = document.getElementById('setup-modal');
-        const locationCountDisplay = document.getElementById('locationCount');
-        const mapContainer = document.getElementById('map');
         
         let db;
         let auth;
         let userId = null;
         let isAuthReady = false;
-        let map;
-        let locationMarkers = {};
 
         // Check if Firebase config is provided
         if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
@@ -306,9 +254,7 @@
                         userIdDisplay.textContent = userId;
                         isAuthReady = true;
                         console.log('User signed in with UID:', userId);
-                        // Start listening for messages and locations only after auth is ready
                         setupMessageListener();
-                        setupMapAndLocationListener();
                     } else {
                         console.log('No user signed in. Attempting anonymous sign-in...');
                         try {
@@ -403,114 +349,6 @@
             } catch (e) {
                 console.error("Error adding document or filtering text: ", e);
             }
-        };
-
-        // Function to set up the map and location tracking
-        const setupMapAndLocationListener = () => {
-            if (!isAuthReady) {
-                return;
-            }
-            
-            // Check if Leaflet library is loaded, and if not, retry after a delay
-            if (typeof L === 'undefined') {
-                console.warn("Leaflet.js library is not loaded yet. Retrying in 100ms.");
-                setTimeout(setupMapAndLocationListener, 100);
-                return;
-            }
-
-            // Initialize the map with OpenStreetMap tiles
-            map = L.map('map').setView([0, 0], 2);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            // Use a MutationObserver to ensure the map redraws when its container size changes
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.target === mapContainer) {
-                        requestAnimationFrame(() => {
-                            if (map) {
-                                map.invalidateSize();
-                            }
-                        });
-                    }
-                });
-            });
-
-            // Start observing the map container for size changes
-            observer.observe(mapContainer, { attributes: true, childList: true, subtree: true });
-
-            // Get and update user's location
-            const updateUserLocation = () => {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            const { latitude, longitude } = position.coords;
-                            try {
-                                const locationRef = doc(db, `artifacts/${appId}/public/data/locations`, userId);
-                                await setDoc(locationRef, {
-                                    latitude,
-                                    longitude,
-                                    timestamp: serverTimestamp()
-                                });
-                                console.log('Location updated.');
-                            } catch (e) {
-                                console.error("Error updating location:", e);
-                            }
-                        },
-                        (error) => {
-                            console.error("Error getting location:", error);
-                        }
-                    );
-                } else {
-                    console.log("Geolocation is not supported by this browser.");
-                }
-            };
-            
-            // Initial location update and then every 30 seconds
-            updateUserLocation();
-            setInterval(updateUserLocation, 30000);
-
-            // Listen for location updates from all users
-            const locationsRef = collection(db, `artifacts/${appId}/public/data/locations`);
-            onSnapshot(locationsRef, (snapshot) => {
-                const activeLocations = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.latitude && data.longitude) {
-                        activeLocations.push({ id: doc.id, lat: data.latitude, lng: data.longitude });
-                    }
-                });
-
-                // Clear old markers
-                map.eachLayer((layer) => {
-                    if (layer instanceof L.Circle) {
-                        map.removeLayer(layer);
-                    }
-                });
-
-                // Add new markers
-                activeLocations.forEach(location => {
-                    const color = location.id === userId ? '#4B6CB7' : '#1c2738';
-                    const marker = L.circle([location.lat, location.lng], {
-                        color: color,
-                        fillColor: color,
-                        fillOpacity: 0.5,
-                        radius: 50000 
-                    }).addTo(map);
-
-                    // If it's the current user, center the map
-                    if (location.id === userId) {
-                        map.setView([location.lat, location.lng], 5);
-                    }
-                });
-
-                locationCountDisplay.textContent = activeLocations.length;
-
-            }, (error) => {
-                console.error("Error listening to locations:", error);
-            });
         };
 
         // Event listeners for sending messages
