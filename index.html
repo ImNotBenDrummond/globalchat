@@ -45,7 +45,7 @@
             height: 100vh;
         }
         
-        .chat-container {
+        .chat-container, .login-container {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -158,6 +158,36 @@
             max-width: 500px;
             text-align: left;
         }
+
+        .login-container {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container input, .login-container button {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .google-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #4285F4;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1.5rem;
+        }
+
+        .google-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
     </style>
 </head>
 
@@ -175,36 +205,65 @@
             <p class="mb-4">Once you've done this, the chat will connect and start working.</p>
         </div>
     </div>
-    
+
     <div class="container">
-        <div class="main-content">
-            <!-- Chat Container -->
-            <div class="chat-container glass-effect">
-                <header class="chat-header">
-                    <h1 class="text-2xl font-bold">Global Chat</h1>
-                    <div class="text-sm">
-                        Your User ID: <span id="userIdDisplay" class="font-mono bg-slate-700 rounded-md p-1">Loading...</span>
-                    </div>
-                </header>
-                <div id="messages" class="flex-grow p-4 overflow-y-auto flex flex-col-reverse gap-2">
-                    <!-- Chat messages will be dynamically added here -->
+        <!-- Login/Signup Container -->
+        <div id="login-section" class="login-container glass-effect hidden">
+            <h2 class="text-2xl font-bold mb-4">Welcome to Global Chat</h2>
+            <p class="mb-6 text-center">Sign in or create an account to join the conversation.</p>
+            <input type="email" id="emailInput" placeholder="Email" class="p-3 rounded-lg bg-gray-700 text-white border-none">
+            <input type="password" id="passwordInput" placeholder="Password" class="p-3 rounded-lg bg-gray-700 text-white border-none">
+            <button id="signInButton" class="bg-blue-600 text-white font-semibold rounded-full py-3 px-6 hover:bg-blue-700 transition-colors">
+                Sign In
+            </button>
+            <button id="createAccountButton" class="bg-gray-500 text-white font-semibold rounded-full py-3 px-6 hover:bg-gray-600 transition-colors">
+                Create Account
+            </button>
+            <div class="my-4 text-sm text-gray-400">or</div>
+            <button id="googleSignInButton" class="google-button rounded-full py-3 px-6 hover:opacity-80 transition-opacity">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24" height="24">
+                    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.083 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                    <path fill="#FF3D00" d="M6.306 14.691L4 21.083l-.01-.035C4.243 14.07 7.733 8.783 13.565 7.425l-2.096 6.136z"/>
+                    <path fill="#4CAF50" d="M12.28 36.634c-1.03-3.09-1.611-6.6-1.611-10.634 0-4.035.581-7.545 1.611-10.634l-2.096-6.136C6.733 8.783 4.243 14.07 4 21.048v.035l2.306 6.39z"/>
+                    <path fill="#1976D2" d="M34.046 6.053l-5.657 5.657C26.158 9.154 23.375 8 20.316 8c-5.22 0-9.654 3.343-11.303 8.001l-5.657 5.657C6.079 17.588 12.955 11 24 11c5.268 0 10.046 2.053 13.611 5.421z"/>
+                    <path fill="#E64A19" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.083 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4c11.045 0 20 8.955 20 20s-8.955 20-20 20-20-8.955-20-20c0-1.341.138-2.65.389-3.917z"/>
+                    <path fill="#4285F4" d="M24 44c11.045 0 20-8.955 20-20s-8.955-20-20-20-20 8.955-20 20 8.955 20 20 20z" opacity=".1" />
+                    <path fill="#FFFFFF" d="M24 11c5.268 0 10.046 2.053 13.611 5.421l5.657-5.657C34.046 6.053 29.268 4 24 4c-11.045 0-20 8.955-20 20s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917l-1.389-6.39z" opacity=".2"/>
+                    <path fill="#FFFFFF" d="M24 4c-11.045 0-20 8.955-20 20s8.955 20 20 20 20-8.955 20-20-8.955-20-20-20zm0 37c-9.389 0-17-7.611-17-17s7.611-17 17-17 17 7.611 17 17-7.611 17-17 17z" opacity=".2"/>
+                    <path fill="#4285F4" d="M24 4c-11.045 0-20 8.955-20 20s8.955 20 20 20 20-8.955 20-20-8.955-20-20-20zm0 37c-9.389 0-17-7.611-17-17s7.611-17 17-17 17 7.611 17 17-7.611 17-17 17z" opacity=".2"/>
+                    <path fill="#4285F4" d="M24 11c5.268 0 10.046 2.053 13.611 5.421l5.657-5.657C34.046 6.053 29.268 4 24 4c-11.045 0-20 8.955-20 20s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917l-1.389-6.39z" opacity=".2"/>
+                </svg>
+                Sign In with Google
+            </button>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chat-section" class="chat-container glass-effect hidden">
+            <header class="chat-header">
+                <h1 class="text-2xl font-bold">Global Chat</h1>
+                <div class="flex items-center gap-2">
+                    <span id="userIdDisplay" class="font-mono bg-slate-700 rounded-md p-1 text-sm">Loading...</span>
+                    <button id="signOutButton" class="text-sm text-red-400 hover:text-red-300 transition-colors">Sign Out</button>
                 </div>
-                <div class="chat-input flex p-4 rounded-b-xl">
-                    <input type="text" id="messageInput" placeholder="Type a message..."
-                        class="flex-grow text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button id="sendButton"
-                        class="bg-blue-600 text-white font-semibold rounded-full px-6 py-2 ml-2 hover:bg-blue-700 transition-colors">
-                        Send
-                    </button>
-                </div>
+            </header>
+            <div id="messages" class="flex-grow p-4 overflow-y-auto flex flex-col-reverse gap-2">
+                <!-- Chat messages will be dynamically added here -->
+            </div>
+            <div class="chat-input flex p-4 rounded-b-xl">
+                <input type="text" id="messageInput" placeholder="Type a message..."
+                    class="flex-grow text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="sendButton"
+                    class="bg-blue-600 text-white font-semibold rounded-full px-6 py-2 ml-2 hover:bg-blue-700 transition-colors">
+                    Send
+                </button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set Firebase debug log level
@@ -229,11 +288,18 @@
         const messagesContainer = document.getElementById('messages');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const setupModal = document.getElementById('setup-modal');
+        const loginSection = document.getElementById('login-section');
+        const chatSection = document.getElementById('chat-section');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const signInButton = document.getElementById('signInButton');
+        const createAccountButton = document.getElementById('createAccountButton');
+        const googleSignInButton = document.getElementById('googleSignInButton');
+        const signOutButton = document.getElementById('signOutButton');
         
         let db;
         let auth;
         let userId = null;
-        let isAuthReady = false;
 
         // Check if Firebase config is provided
         if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
@@ -248,21 +314,19 @@
                 db = getFirestore(app);
 
                 // Firebase Auth listener
-                onAuthStateChanged(auth, async (user) => {
+                onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        userIdDisplay.textContent = userId;
-                        isAuthReady = true;
+                        userIdDisplay.textContent = user.displayName || user.email || user.uid;
+                        chatSection.classList.remove('hidden');
+                        loginSection.classList.add('hidden');
                         console.log('User signed in with UID:', userId);
                         setupMessageListener();
                     } else {
-                        console.log('No user signed in. Attempting anonymous sign-in...');
-                        try {
-                            await signInAnonymously(auth);
-                            console.log('Signed in anonymously.');
-                        } catch (error) {
-                            console.error("Error signing in anonymously. This often means you have not enabled Anonymous Authentication in your Firebase project. Please check the Firebase Console -> Authentication -> Sign-in method tab to enable it.", error);
-                        }
+                        userId = null;
+                        chatSection.classList.add('hidden');
+                        loginSection.classList.remove('hidden');
+                        console.log('User signed out.');
                     }
                 });
             } catch (e) {
@@ -274,8 +338,8 @@
 
         // Function to set up the real-time message listener
         const setupMessageListener = () => {
-            if (!isAuthReady) {
-                return; // Wait for auth to be ready
+            if (!userId) {
+                return;
             }
 
             const chatCollectionRef = collection(db, `artifacts/${appId}/public/data/chat`);
@@ -350,6 +414,69 @@
                 console.error("Error adding document or filtering text: ", e);
             }
         };
+
+        // Auth functions
+        const signInWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Error signing in with Google:", error);
+            }
+        };
+
+        const createAccountWithEmail = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                console.error("Email and password are required.");
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
+                console.log("Account created with email:", userCredential.user.email);
+            } catch (error) {
+                console.error("Error creating account:", error);
+            }
+        };
+
+        const signInWithEmail = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                console.error("Email and password are required.");
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log("Signed in with email:", email);
+            } catch (error) {
+                console.error("Error signing in with email:", error);
+            }
+        };
+
+        const handleSignOut = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Error signing out:", error);
+            }
+        };
+
+        // Event listeners for auth
+        if (googleSignInButton) {
+            googleSignInButton.addEventListener('click', signInWithGoogle);
+        }
+        if (createAccountButton) {
+            createAccountButton.addEventListener('click', createAccountWithEmail);
+        }
+        if (signInButton) {
+            signInButton.addEventListener('click', signInWithEmail);
+        }
+        if (signOutButton) {
+            signOutButton.addEventListener('click', handleSignOut);
+        }
 
         // Event listeners for sending messages
         if (sendButton) {
