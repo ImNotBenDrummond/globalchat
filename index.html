@@ -1,1 +1,449 @@
-MATAINANCE IN PROGRESS
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @supports (backdrop-filter: blur(20px)) {
+            .glass-effect {
+                backdrop-filter: blur(20px) saturate(180%);
+                -webkit-backdrop-filter: blur(20px) saturate(180%);
+                background-color: rgba(255, 255, 255, 0.08);
+            }
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+        
+        /* Subtle radial gradient for the background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, #4B6CB7, transparent 50%),
+                        radial-gradient(circle at bottom left, #1c2738, transparent 50%);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .chat-container, .login-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .chat-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 0.5rem;
+        }
+        
+        /* Transparent scrollbar */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            max-width: 85%;
+            word-wrap: break-word;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sent {
+            background-color: rgba(75, 108, 183, 0.7);
+            align-self: flex-end;
+            border-bottom-right-radius: 0.5rem;
+        }
+
+        .received {
+            background-color: rgba(62, 68, 91, 0.7);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #e0e0e0;
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.5);
+        }
+
+        .chat-input button {
+            background: linear-gradient(45deg, #4b6cb7, #1c2738);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1.5rem;
+            margin-left: 0.5rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        .login-container {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container input, .login-container button {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-[#1a1a2e]">
+    <div id="setup-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-effect">
+            <h2 class="text-2xl font-bold mb-4">Setup Required</h2>
+            <p class="mb-4">This application requires a Firebase configuration to function. Please follow these steps to set it up:</p>
+            <ol class="list-decimal list-inside mb-4 space-y-2">
+                <li>Create a new Firebase project.</li>
+                <li>Add a new web app to your project.</li>
+                <li>Copy the `firebaseConfig` object provided by Firebase.</li>
+                <li>Paste it into the `script` tag below the comment "PASTE YOUR FIREBASE CONFIG HERE".</li>
+            </ol>
+            <p class="mb-4">Once you've done this, the chat will connect and start working.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Login/Signup Container -->
+        <div id="login-section" class="login-container glass-effect hidden">
+            <h2 class="text-2xl font-bold mb-4">Welcome to Global Chat</h2>
+            <p class="mb-6 text-center">Sign in or create an account to join the conversation.</p>
+            <input type="email" id="emailInput" placeholder="Email" class="p-3 rounded-lg bg-gray-700 text-white border-none">
+            <input type="password" id="passwordInput" placeholder="Password" class="p-3 rounded-lg bg-gray-700 text-white border-none">
+            <button id="signInButton" class="bg-blue-600 text-white font-semibold rounded-full py-3 px-6 hover:bg-blue-700 transition-colors">
+                Sign In
+            </button>
+            <button id="createAccountButton" class="bg-gray-500 text-white font-semibold rounded-full py-3 px-6 hover:bg-gray-600 transition-colors">
+                Create Account
+            </button>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chat-section" class="chat-container glass-effect hidden">
+            <header class="chat-header">
+                <h1 class="text-2xl font-bold">Global Chat</h1>
+                <div class="flex items-center gap-2">
+                    <span id="userIdDisplay" class="font-mono bg-slate-700 rounded-md p-1 text-sm">Loading...</span>
+                    <button id="signOutButton" class="text-sm text-red-400 hover:text-red-300 transition-colors">Sign Out</button>
+                </div>
+            </header>
+            <div id="messages" class="flex-grow p-4 overflow-y-auto flex flex-col-reverse gap-2">
+                <!-- Chat messages will be dynamically added here -->
+            </div>
+            <div class="chat-input flex p-4 rounded-b-xl">
+                <input type="text" id="messageInput" placeholder="Type a message..."
+                    class="flex-grow text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="sendButton"
+                    class="bg-blue-600 text-white font-semibold rounded-full px-6 py-2 ml-2 hover:bg-blue-700 transition-colors">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set Firebase debug log level
+        setLogLevel('debug');
+
+        // Global variables provided by the Canvas environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXYFiwWqyl3fCz-MWcfLuTgLdpl2jcc30",
+            authDomain: "my-global-chat-c506c.firebaseapp.com",
+            projectId: "my-global-chat-c506c",
+            storageBucket: "my-global-chat-c506c.firebasestorage.app",
+            messagingSenderId: "704335585144",
+            appId: "1:704335585144:web:8254944271df95a0f1f28d"
+        };
+
+        // UI elements
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesContainer = document.getElementById('messages');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const setupModal = document.getElementById('setup-modal');
+        const loginSection = document.getElementById('login-section');
+        const chatSection = document.getElementById('chat-section');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const signInButton = document.getElementById('signInButton');
+        const createAccountButton = document.getElementById('createAccountButton');
+        const signOutButton = document.getElementById('signOutButton');
+        
+        let db;
+        let auth;
+        let userId = null;
+
+        // Check if Firebase config is provided
+        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+            setupModal.classList.remove('hidden');
+            userIdDisplay.textContent = 'Setup required';
+            console.error('Firebase configuration is missing. Please add your config to the script.');
+        } else {
+            try {
+                // Initialize Firebase services
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Firebase Auth listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = user.displayName || user.email || user.uid;
+                        chatSection.classList.remove('hidden');
+                        loginSection.classList.add('hidden');
+                        console.log('User signed in with UID:', userId);
+                        setupMessageListener();
+                    } else {
+                        userId = null;
+                        chatSection.classList.add('hidden');
+                        loginSection.classList.remove('hidden');
+                        console.log('User signed out.');
+                    }
+                });
+            } catch (e) {
+                console.error("Failed to initialize Firebase:", e);
+                userIdDisplay.textContent = 'Error';
+                setupModal.classList.remove('hidden');
+            }
+        }
+
+        // Function to set up the real-time message listener
+        const setupMessageListener = () => {
+            if (!userId) {
+                return;
+            }
+
+            const chatCollectionRef = collection(db, `artifacts/${appId}/public/data/chat`);
+            const q = query(chatCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    messages.push({
+                        id: doc.id,
+                        senderId: data.senderId,
+                        text: data.text,
+                        timestamp: data.timestamp ? data.timestamp.toMillis() : Date.now()
+                    });
+                });
+
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+                
+                messagesContainer.innerHTML = '';
+
+                messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('message-bubble', 'text-white', 'p-3', 'rounded-2xl', 'break-words', 'max-w-xs');
+                    
+                    const senderName = document.createElement('span');
+                    senderName.classList.add('text-xs', 'font-bold', 'block', 'mb-1');
+                    senderName.textContent = msg.senderId;
+
+                    const messageText = document.createElement('p');
+                    messageText.textContent = msg.text;
+
+                    bubble.appendChild(senderName);
+                    bubble.appendChild(messageText);
+
+                    if (msg.senderId === userId) {
+                        bubble.classList.add('sent', 'bg-blue-500', 'self-end');
+                        senderName.textContent = 'You';
+                    } else {
+                        bubble.classList.add('received', 'bg-slate-700', 'self-start');
+                    }
+                    messagesContainer.prepend(bubble);
+                });
+            }, (error) => {
+                console.error("Error listening to messages:", error);
+            });
+        };
+
+        // Function to send a new message with text filtering
+        const sendMessage = async () => {
+            let text = messageInput.value.trim();
+            if (!text || !userId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://www.purgomalum.com/service/plain?text=${encodeURIComponent(text)}`);
+                if (response.ok) {
+                    text = await response.text();
+                } else {
+                    console.error("Error filtering text:", response.statusText);
+                }
+                
+                const chatCollectionRef = collection(db, `artifacts/${appId}/public/data/chat`);
+                await addDoc(chatCollectionRef, {
+                    senderId: userId,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+                messageInput.value = '';
+            } catch (e) {
+                console.error("Error adding document or filtering text: ", e);
+            }
+        };
+
+        // Auth functions
+        const createAccountWithEmail = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                console.error("Email and password are required.");
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
+                console.log("Account created with email:", userCredential.user.email);
+            } catch (error) {
+                console.error("Error creating account:", error);
+            }
+        };
+
+        const signInWithEmail = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                console.error("Email and password are required.");
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log("Signed in with email:", email);
+            } catch (error) {
+                console.error("Error signing in with email:", error);
+            }
+        };
+
+        const handleSignOut = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Error signing out:", error);
+            }
+        };
+
+        // Event listeners for auth
+        if (createAccountButton) {
+            createAccountButton.addEventListener('click', createAccountWithEmail);
+        }
+        if (signInButton) {
+            signInButton.addEventListener('click', signInWithEmail);
+        }
+        if (signOutButton) {
+            signOutButton.addEventListener('click', handleSignOut);
+        }
+
+        // Event listeners for sending messages
+        if (sendButton) {
+            sendButton.addEventListener('click', sendMessage);
+        }
+        if (messageInput) {
+            messageInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
