@@ -418,12 +418,28 @@
                 return;
             }
 
-            // Initialize the map with ESRI tiles
+            // Initialize the map with OpenStreetMap tiles
             map = L.map('map').setView([0, 0], 2);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
+
+            // Use a MutationObserver to ensure the map redraws when its container size changes
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.target === mapContainer) {
+                        requestAnimationFrame(() => {
+                            if (map) {
+                                map.invalidateSize();
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Start observing the map container for size changes
+            observer.observe(mapContainer, { attributes: true, childList: true, subtree: true });
 
             // Get and update user's location
             const updateUserLocation = () => {
